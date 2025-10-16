@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>待办事项列表 - Tailwind CSS 版</title>
+    <!-- 引入 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 自定义配置，比如我们想用一些 Tailwind 没有直接提供的颜色 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'fade-out': 'fadeOut 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeOut: {
+                            '0%': { opacity: '1', transform: 'translateX(0)' },
+                            '100%': { opacity: '0', transform: 'translateX(20px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
+
+    <div class="container mx-auto px-4 py-8 max-w-xl">
+        <!-- 标题区域 -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">我的待办事项</h1>
+            <p class="text-gray-600">保持专注，让生活更有条理</p>
+        </header>
+
+        <!-- 主卡片区域 -->
+        <main class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+            <!-- 输入区域 -->
+            <form id="task-form" class="flex gap-2 mb-6">
+                <input 
+                    type="text" 
+                    id="task-input" 
+                    placeholder="添加一个新的任务..." 
+                    class="flex-grow px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                    required
+                >
+                <button 
+                    type="submit" 
+                    class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 shadow-md hover:shadow-lg"
+                >
+                    添加
+                </button>
+            </form>
+
+            <!-- 任务列表区域 -->
+            <div id="task-list" class="space-y-2">
+                <!-- 任务项将通过 JavaScript 动态添加到这里 -->
+            </div>
+
+            <!-- 空状态提示 -->
+            <div id="empty-state" class="text-center py-12 text-gray-400">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                <p>还没有任务，添加一个开始吧！</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const taskForm = document.getElementById('task-form');
+            const taskInput = document.getElementById('task-input');
+            const taskList = document.getElementById('task-list');
+            const emptyState = document.getElementById('empty-state');
+
+            // 更新空状态的显示
+            const updateEmptyState = () => {
+                if (taskList.children.length === 0) {
+                    emptyState.style.display = 'block';
+                } else {
+                    emptyState.style.display = 'none';
+                }
+            };
+
+            // 添加任务
+            taskForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // 阻止表单默认提交行为
+
+                const taskText = taskInput.value.trim();
+                if (taskText === '') return;
+
+                // 创建任务项的容器
+                const taskItem = document.createElement('div');
+                taskItem.className = 'group flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-transparent hover:border-gray-200 transition-all duration-200';
+
+                // 创建复选框
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer task-checkbox';
+
+                // 创建任务文本标签
+                const taskLabel = document.createElement('label');
+                taskLabel.className = 'flex-grow text-gray-700 cursor-pointer select-none';
+                taskLabel.textContent = taskText;
+
+                // 创建删除按钮
+                const deleteButton = document.createElement('button');
+                deleteButton.innerHTML = `
+                    <svg class="w-5 h-5 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                `;
+                deleteButton.className = 'delete-button p-1 rounded hover:bg-red-100 transition duration-200';
+                deleteButton.setAttribute('aria-label', '删除任务');
+
+                // 组装任务项
+                taskItem.appendChild(checkbox);
+                taskItem.appendChild(taskLabel);
+                taskItem.appendChild(deleteButton);
+                taskList.appendChild(taskItem);
+
+                // 清空输入框
+                taskInput.value = '';
+                updateEmptyState();
+            });
+
+            // 处理任务项的点击事件（复选框和删除按钮）
+            taskList.addEventListener('click', (event) => {
+                const target = event.target;
+                const taskItem = target.closest('.group'); // 找到最近的父级任务容器
+
+                // 如果点击的是复选框
+                if (target.classList.contains('task-checkbox')) {
+                    const label = taskItem.querySelector('label');
+                    if (target.checked) {
+                        label.classList.add('line-through', 'text-gray-400');
+                    } else {
+                        label.classList.remove('line-through', 'text-gray-400');
+                    }
+                }
+
+                // 如果点击的是删除按钮
+                if (target.closest('.delete-button')) {
+                    taskItem.style.animation = 'fade-out 0.5s ease-out forwards';
+                    setTimeout(() => {
+                        taskItem.remove();
+                        updateEmptyState();
+                    }, 500); // 等待动画结束后再移除元素
+                }
+            });
+
+            // 初始化时检查空状态
+            updateEmptyState();
+        });
+    </script>
+</body>
+</html>
